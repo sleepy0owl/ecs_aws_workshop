@@ -4,8 +4,9 @@ from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
     aws_rds as rds,
-    aws_secretsmanager as sm
-)
+    aws_secretsmanager as sm,
+    StackProps,
+)   
 from constructs import Construct
 
 with open("/Users/subbusainathrengasamy/Antstack/workshop-test-run/monolith-uni-test/user-data.sh") as f:
@@ -73,7 +74,7 @@ class MonolithUniTestStack(Stack):
 
         self.db_sg.add_ingress_rule(peer=ec2.Peer.security_group_id(self.sg.security_group_id), connection=ec2.Port.tcp(3306), description='Allow port 3306 only to the webserver in order to access the MYSQL')
         #create db instance 
-        db_instance = rds.DatabaseInstance(
+        self.db_instance = rds.DatabaseInstance(
             self,
             "rds-instance",
             engine=rds.DatabaseInstanceEngine.MYSQL,
@@ -89,3 +90,13 @@ class MonolithUniTestStack(Stack):
                 subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
             ),
         )
+
+class MonolithStackProp(StackProps):
+    db_instance: rds.DatabaseInstance
+
+class MonolithECSStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, props: MonolithStackProp, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        rds_database = props.db_instance
+
+        
